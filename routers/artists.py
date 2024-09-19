@@ -2,7 +2,7 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
 from crud import list_artists, get_artist, get_albums_by_artist
-from .albums import AlbumObject
+from .albums import AlbumList
 
 
 class ArtistObject(BaseModel):
@@ -35,3 +35,8 @@ def artist(id: int) -> ArtistObject:
         raise HTTPException(status_code=404)
 
     return result
+
+
+@router.get("/{id}/albums")
+def albums_by_artist(id: int) -> AlbumList:
+    return {"items": get_albums_by_artist(id)}
