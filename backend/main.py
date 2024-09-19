@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 
-from routers import artists, albums
+from .routers import artists, albums
 
 app = FastAPI()
 

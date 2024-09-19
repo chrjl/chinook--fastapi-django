@@ -1,14 +1,14 @@
 # Import settings
 import os
 
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.settings")
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "backend.config.settings")
 
 # setup django environment
 import django
 
 django.setup()
 
-from db.models import Artist, Album
+from .db.models import Artist, Album
 
 
 def list_artists(limit: int, offset: int = 0):

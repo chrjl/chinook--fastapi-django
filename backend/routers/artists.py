@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
-from crud import list_artists, get_artist, get_albums_by_artist
+from ..crud import list_artists, get_artist, get_albums_by_artist
 from .albums import AlbumList
 
 

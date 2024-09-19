@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
-from crud import list_albums, get_album
+from ..crud import list_albums, get_album
 
 router = APIRouter(tags=["albums"])
 
