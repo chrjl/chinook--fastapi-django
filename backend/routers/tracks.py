@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
-from ..crud import list_tracks, get_track
+from ..crud import count_tracks, list_tracks, get_track
 
 
 class TrackObject(BaseModel):
@@ -19,17 +19,19 @@ class TrackObject(BaseModel):
 class TrackList(BaseModel):
     limit: int = 0
     offset: int = 0
+    total: int
     items: list[TrackObject]
 
 
 router = APIRouter(tags=["tracks"])
 
 
-@router.get("/")
+@router.get("")
 def tracks(limit: int = 10, offset: int = 0) -> TrackList:
-    result = list_tracks(limit, offset)
+    total = count_tracks()
+    items = list_tracks(limit, offset)
 
-    return {"limit": limit, "offset": offset, "items": result}
+    return {"limit": limit, "offset": offset, "total": total, "items": items}
 
 
 @router.get("/{id}")
