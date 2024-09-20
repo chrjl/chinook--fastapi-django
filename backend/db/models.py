@@ -26,3 +26,17 @@ class Genre(models.Model):
 
     class Meta:
         db_table = "Genre"
+
+
+class Track(models.Model):
+    id = models.IntegerField(db_column="TrackId")
+    name = models.CharField(db_column="Name", max_length=200)
+    album = models.ForeignKey(Album, db_column="AlbumId", on_delete=models.DO_NOTHING)
+    genre = models.ForeignKey(Genre, db_column="GenreId", on_delete=models.DO_NOTHING)
+    composer = models.CharField(db_column="Composer", max_length=220)
+    milliseconds = models.IntegerField(db_column="Milliseconds")
+    size = models.IntegerField(db_column="Bytes")
+    unit_price = models.FloatField(db_column="UnitPrice")
+
+    class Meta:
+        db_table = "Track"
