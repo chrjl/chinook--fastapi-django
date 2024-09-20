@@ -18,3 +18,11 @@ class Album(models.Model):
 
     class Meta:
         db_table = "Album"
+
+
+class Genre(models.Model):
+    id = models.IntegerField(db_column="GenreId", primary_key=True)
+    name = models.CharField(db_column="Name", max_length=120)
+
+    class Meta:
+        db_table = "Genre"
