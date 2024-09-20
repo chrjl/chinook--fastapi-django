@@ -1,7 +1,8 @@
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
-from ..crud import list_albums, get_album
+from ..crud import list_albums, get_album, get_tracks_by_album
+from .tracks import TrackList
 
 router = APIRouter(tags=["albums"])
 
@@ -34,3 +35,13 @@ def album(id: int) -> AlbumObject:
         raise HTTPException(status_code=404)
 
     return result
+
+
+@router.get("/{id}/tracks")
+def tracks(id: int) -> TrackList:
+    result = get_tracks_by_album(id)
+
+    if not result:
+        raise HTTPException(status_code=404)
+
+    return {"items": result}
