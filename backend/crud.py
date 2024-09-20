@@ -11,6 +11,10 @@ django.setup()
 from .db.models import Artist, Album, Genre, Track
 
 
+def count_artists():
+    return Artist.objects.count()
+
+
 def list_artists(limit: int, offset: int = 0):
     return list(Artist.objects.values()[offset : offset + limit])
 
@@ -22,6 +26,18 @@ def get_artist(id: int):
         return None
 
     return artist
+
+
+def count_albums(artist_id: int = 0):
+    if artist_id:
+        try:
+            artist = Artist.objects.get(pk=artist_id)
+        except Artist.DoesNotExist:
+            return 0
+
+        return artist.album_set.count()
+
+    return Album.objects.count()
 
 
 def list_albums(limit: int, offset: int = 0):
@@ -50,6 +66,18 @@ def list_genres():
     genre_list = [item["name"] for item in Genre.objects.values()]
 
     return genre_list
+
+
+def count_tracks(album_id: int = 0):
+    if album_id:
+        try:
+            album = Album.objects.get(pk=album_id)
+        except Album.DoesNotExist:
+            return 0
+
+        return album.track_set.count()
+        
+    return Track.objects.count()
 
 
 def list_tracks(limit: int, offset: int = 0):
