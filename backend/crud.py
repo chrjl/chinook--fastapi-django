@@ -8,7 +8,7 @@ import django
 
 django.setup()
 
-from .db.models import Artist, Album
+from .db.models import Artist, Album, Genre
 
 
 def list_artists(limit: int, offset: int = 0):
@@ -44,3 +44,9 @@ def get_albums_by_artist(id: int):
         return None
 
     return list(artist.album_set.values())
+
+
+def list_genres():
+    genre_list = [item["name"] for item in Genre.objects.values()]
+
+    return genre_list
