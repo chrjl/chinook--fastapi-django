@@ -7,6 +7,7 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import Root from './routes/root';
 import Artists from './routes/artists';
 import Albums from './routes/albums';
+import Tracks from './routes/tracks';
 
 const router = createBrowserRouter([
   {
@@ -23,7 +24,7 @@ const router = createBrowserRouter([
       },
       {
         path: '/tracks',
-        element: <div>Tracks</div>,
+        element: <Tracks />,
       },
       {
         path: '/genres',
