@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useOutletContext } from 'react-router-dom';
 
 import ListGroup from 'react-bootstrap/ListGroup';
 import Pagination from 'react-bootstrap/Pagination';
@@ -14,6 +14,7 @@ export default function Artist() {
   const [artists, setArtists] = useState<ArtistObject[]>([]);
   const [page, setPage] = useState<number>(1);
   const [total, setTotal] = useState<number>(0);
+  const [selected, setSelected] = useOutletContext();
 
   const limit = 20;
   const totalPages = Math.ceil(total / limit);

@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Outlet, Link } from 'react-router-dom';
 
 import Container from 'react-bootstrap/Container';
@@ -7,11 +8,22 @@ import Nav from 'react-bootstrap/Nav';
 import githubMark from '../assets/github-mark-white.svg';
 
 export default function Root() {
+  const [selected, setSelected] = useState({
+    artist: {
+      id: null,
+      name: null,
+    },
+    album: {
+      id: null,
+      title: null,
+    },
+  });
+
   return (
     <>
       <Navigation />
       <Container>
-        <Outlet />
+        <Outlet context={[selected, setSelected]} />
       </Container>
     </>
   );
