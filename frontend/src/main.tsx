@@ -5,6 +5,7 @@ import { createBrowserRouter, RouterProvider } from 'react-router-dom';
 import 'bootstrap/dist/css/bootstrap.min.css';
 
 import Root from './routes/root';
+import Artists from './routes/artists';
 
 const router = createBrowserRouter([
   {
@@ -13,7 +14,7 @@ const router = createBrowserRouter([
     children: [
       {
         path: '/artists',
-        element: <div>Artists</div>,
+        element: <Artists />,
       },
       {
         path: '/albums',
