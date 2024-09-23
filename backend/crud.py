@@ -81,7 +81,7 @@ def count_tracks(album_id: int = 0):
 
 
 def list_tracks(limit: int, offset: int = 0):
-    return list(Track.objects.values()[offset : offset + limit])
+    return list(Track.objects.order_by("name").values()[offset : offset + limit])
 
 
 def get_track(id: int):

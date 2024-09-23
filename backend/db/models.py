@@ -7,6 +7,7 @@ class Artist(models.Model):
 
     class Meta:
         db_table = "Artist"
+        ordering = ["name"]
 
 
 class Album(models.Model):
@@ -18,6 +19,7 @@ class Album(models.Model):
 
     class Meta:
         db_table = "Album"
+        ordering = ["title"]
 
 
 class Genre(models.Model):
