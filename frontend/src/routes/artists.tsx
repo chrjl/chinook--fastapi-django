@@ -34,9 +34,14 @@ export default function Artist() {
   return (
     <div>
       <ListGroup>
-        {artists.map((artist) => (
-          <ListGroup.Item key={artist.id}>
-            <Link to="/albums">{artist.name}</Link>
+        {artists.map(({ id, name }) => (
+          <ListGroup.Item key={id}>
+            <Link
+              to="/albums"
+              onClick={() => setSelected({ artist: { id, name } })}
+            >
+              {name}
+            </Link>
           </ListGroup.Item>
         ))}
       </ListGroup>
