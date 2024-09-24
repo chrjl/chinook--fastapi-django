@@ -2,7 +2,9 @@ import { useState, useEffect } from 'react';
 import { Link, useOutletContext } from 'react-router-dom';
 
 import ListGroup from 'react-bootstrap/ListGroup';
-import Pagination from 'react-bootstrap/Pagination';
+import Container from 'react-bootstrap/Container';
+
+import SimplePagination from '../utilities/simple-pagination';
 
 interface ArtistObject {
   id: number;
@@ -33,6 +35,10 @@ export default function Artist() {
 
   return (
     <div>
+      <Container className="d-flex flex-column align-items-center">
+        <SimplePagination setPage={setPage} first={1} last={totalPages} />
+      </Container>
+
       <ListGroup>
         {artists.map(({ id, name }) => (
           <ListGroup.Item key={id}>
@@ -45,23 +51,6 @@ export default function Artist() {
           </ListGroup.Item>
         ))}
       </ListGroup>
-      <Pagination className="justify-content-center">
-        <Pagination.Prev onClick={handlePreviousPage} />
-        <Pagination.Item disabled>{page}</Pagination.Item>
-        <Pagination.Next onClick={handleNextPage} />
-      </Pagination>
     </div>
   );
-
-  function handleNextPage() {
-    if (page < totalPages) {
-      setPage((page) => page + 1);
-    }
-  }
-
-  function handlePreviousPage() {
-    if (page > 1) {
-      setPage((page) => page - 1);
-    }
-  }
 }
