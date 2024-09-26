@@ -17,7 +17,7 @@ class ArtistList(BaseModel):
 class AlbumObject(BaseModel):
     id: int = 0
     title: str
-    artist_id: int
+    artist: ArtistObject
     type: str = "album"
 
 

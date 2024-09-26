@@ -41,16 +41,19 @@ def count_albums(artist_id: int = 0):
 
 
 def list_albums(limit: int, offset: int = 0):
-    return list(Album.objects.values()[offset : offset + limit])
+    albums = Album.objects.values()[offset : offset + limit]
+    albums = [{**album, "artist": get_artist(album["artist_id"])} for album in albums]
+    return albums
 
 
 def get_album(id: int):
     try:
         album = Album.objects.values().get(pk=id)
+        artist = get_artist(album["artist_id"])
     except Album.DoesNotExist:
         return None
 
-    return album
+    return {**album, "artist": artist}
 
 
 def get_albums_by_artist(id: int):
@@ -59,7 +62,10 @@ def get_albums_by_artist(id: int):
     except Artist.DoesNotExist:
         return None
 
-    return list(artist.album_set.values())
+    albums = artist.album_set.values()
+    albums = [{**album, "artist": artist} for album in albums]
+
+    return albums
 
 
 def list_genres():
