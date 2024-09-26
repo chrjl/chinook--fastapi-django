@@ -1,24 +1,15 @@
 from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel
 
-from ..crud import count_albums, list_albums, get_album, count_tracks, get_tracks_by_album
-from .tracks import TrackList
+from ..schema import AlbumObject, AlbumList, TrackList
+from ..crud import (
+    count_albums,
+    list_albums,
+    get_album,
+    count_tracks,
+    get_tracks_by_album,
+)
 
 router = APIRouter(tags=["albums"])
-
-
-class AlbumObject(BaseModel):
-    id: int = 0
-    title: str
-    artist_id: int
-    type: str = "album"
-
-
-class AlbumList(BaseModel):
-    limit: int = 0
-    offset: int = 0
-    total: int
-    items: list[AlbumObject]
 
 
 @router.get("")

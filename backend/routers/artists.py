@@ -1,5 +1,4 @@
 from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel
 
 from ..crud import (
     count_artists,
@@ -8,20 +7,9 @@ from ..crud import (
     count_albums,
     get_albums_by_artist,
 )
+
+from ..schema import ArtistObject, ArtistList
 from .albums import AlbumList
-
-
-class ArtistObject(BaseModel):
-    id: int = 0
-    name: str
-    type: str = "artist"
-
-
-class ArtistList(BaseModel):
-    limit: int
-    offset: int
-    total: int
-    items: list[ArtistObject]
 
 
 router = APIRouter(tags=["artists"])
