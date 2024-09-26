@@ -1,9 +1,17 @@
 import { useState, useEffect } from 'react';
-import { useOutletContext } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 
 import ListGroup from 'react-bootstrap/ListGroup';
+import Modal from 'react-bootstrap/Modal';
+import Button from 'react-bootstrap/Button';
+import Container from 'react-bootstrap/Container';
 
-interface TrackObject {
+import { ArtistObject } from './artists';
+import { AlbumObject } from './albums';
+import SimplePagination from '../utilities/simple-pagination';
+import timestring from '../utilities/timestring';
+
+export interface TrackObject {
   id: number;
   name: string;
   milliseconds: number;
@@ -11,26 +19,58 @@ interface TrackObject {
 }
 
 export default function Tracks() {
-  const [tracks, setTracks] = useState<TrackObject[]>([]);
-  const [selected, setSelected] = useOutletContext();
-  const { artist, album } = selected;
+  const { albumId } = useParams();
 
-  const totalMilliseconds = tracks?.reduce(
-    (total, track) => total + track.milliseconds,
-    0
-  );
+  const [artist, setArtist] = useState<ArtistObject | null>();
+  const [album, setAlbum] = useState<AlbumObject | null>();
+  const [page, setPage] = useState<number>(1);
+  const [total, setTotal] = useState<number>(0);
+  const [showModal, setShowModal] = useState<boolean>(false);
+
+  const [trackList, setTrackList] = useState<TrackObject[]>([]);
+  const [selectedTrackId, setSelectedTrackId] = useState<number | null>(null);
+
+  const limit = 20;
+  const totalPages = Math.ceil(total / limit);
 
   useEffect(() => {
-    if (album) {
-      fetch(`/api/albums/${album.id}/tracks`)
+    if (albumId) {
+      fetch(`/api/albums/${albumId}`)
         .then((res) => res.json())
-        .then((res) => setTracks(res.items));
+        .then((res) => {
+          setAlbum(res);
+          return fetch(`/api/artists/${res.artist_id}`);
+        })
+        .then((res) => res.json())
+        .then((res) => setArtist(res));
+
+      fetch(`/api/albums/${albumId}/tracks`)
+        .then((res) => res.json())
+        .then((res) => setTrackList(res.items));
+    } else {
+      setArtist(null);
+      setAlbum(null);
+
+      fetch(`/api/tracks?limit=${limit}&offset=${(page - 1) * limit}`)
+        .then((res) => res.json())
+        .then((res) => {
+          setTrackList(res.items);
+          setTotal(res.total);
+        });
     }
-  }, [album]);
+  }, [albumId, page]);
 
   return (
     <>
       <h1>Tracks</h1>
+
+      {selectedTrackId && (
+        <TrackModal
+          id={selectedTrackId}
+          show={showModal}
+          setShow={setShowModal}
+        />
+      )}
 
       {artist && (
         <p>
@@ -38,29 +78,87 @@ export default function Tracks() {
         </p>
       )}
 
-      {album && (
+      {album ? (
         <p>
-          Album: <strong>{album.title}</strong> ({timeString(totalMilliseconds)}
-          )
+          Album: <strong>{album.title}</strong>
         </p>
+      ) : (
+        <Container className="d-flex flex-column align-items-center">
+          <SimplePagination first={1} last={totalPages} setPage={setPage} />
+        </Container>
       )}
 
-      {tracks && (
-        <ListGroup>
-          {tracks.map(({ id, name, milliseconds }) => (
-            <ListGroup.Item key={id}>
-              {name} ({timeString(milliseconds)})
+      {trackList && (
+        <ListGroup variant="flush">
+          {trackList.map(({ id, name, milliseconds }) => (
+            <ListGroup.Item
+              key={id}
+              action
+              onClick={() => handleSelectTrack(id)}
+            >
+              {name} ({timestring(milliseconds)})
             </ListGroup.Item>
           ))}
         </ListGroup>
       )}
     </>
   );
+
+  function handleSelectTrack(id: number) {
+    setSelectedTrackId(id);
+    setShowModal(true);
+  }
 }
 
-function timeString(milliseconds: number) {
-  const minutes = Math.floor(milliseconds / 60000);
-  const seconds = Math.floor((milliseconds % 60000) / 1000);
+interface TrackModalProps {
+  id: number;
+  show: boolean;
+  setShow: React.Dispatch<React.SetStateAction<boolean>>;
+}
 
-  return `${minutes}:${String(seconds).padStart(2, '0')}`;
+function TrackModal({ id, show, setShow }: TrackModalProps) {
+  const [artist, setArtist] = useState<ArtistObject | null>(null);
+  const [album, setAlbum] = useState<AlbumObject | null>(null);
+  const [track, setTrack] = useState<TrackObject | null>(null);
+
+  useEffect(() => {
+    fetch(`/api/tracks/${id}`)
+      .then((res) => res.json())
+      .then((res) => {
+        setTrack(res);
+        return fetch(`/api/albums/${res.album_id}`);
+      })
+      .then((res) => res.json())
+      .then((res) => {
+        setAlbum(res);
+        return fetch(`/api/artists/${res.artist_id}`);
+      })
+      .then((res) => res.json())
+      .then((res) => setArtist(res));
+  }, [id]);
+
+  return (
+    track && (
+      <Modal centered show={show} onHide={handleClose}>
+        <Modal.Header closeButton>
+          <Modal.Title>{track.name}</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <p>TrackId: {track.id}</p>
+          {artist && <p>Artist: {artist.name}</p>}
+          {album && <p>Album: {album.title}</p>}
+          <p>Time: {timestring(track.milliseconds)}</p>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={handleClose}>
+            Close
+          </Button>
+        </Modal.Footer>
+      </Modal>
+    )
+  );
+
+  function handleClose() {
+    setShow(false);
+  }
 }
