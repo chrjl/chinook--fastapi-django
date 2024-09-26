@@ -27,6 +27,10 @@ const router = createBrowserRouter([
         element: <Albums />,
       },
       {
+        path: '/albums/:albumId/tracks',
+        element: <Tracks />,
+      },
+      {
         path: '/tracks',
         element: <Tracks />,
       },
