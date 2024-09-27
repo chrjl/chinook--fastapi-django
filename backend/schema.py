@@ -31,12 +31,13 @@ class AlbumList(BaseModel):
 class TrackObject(BaseModel):
     id: int
     name: str
-    album_id: int
     # genre_id: int
     # composer: str | None
     milliseconds: int
     # size: int
     # unit_price: float
+    artist: ArtistObject
+    album: AlbumObject
     type: str = "track"
 
 

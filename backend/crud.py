@@ -82,21 +82,32 @@ def count_tracks(album_id: int = 0):
             return 0
 
         return album.track_set.count()
-        
+
     return Track.objects.count()
 
 
 def list_tracks(limit: int, offset: int = 0):
-    return list(Track.objects.order_by("name").values()[offset : offset + limit])
+    tracks = Track.objects.order_by("name").values()[offset : offset + limit]
+
+    return [
+        {
+            **track,
+            "album": get_album(track["album_id"]),
+            "artist": get_artist(get_album(track["album_id"])["artist_id"]),
+        }
+        for track in tracks
+    ]
 
 
 def get_track(id: int):
     try:
         track = Track.objects.values().get(pk=id)
+        album = get_album(track["album_id"])
+        artist = get_artist(album["artist_id"])
     except Track.DoesNotExist:
         return None
 
-    return track
+    return {**track, "artist": artist, "album": album}
 
 
 def get_tracks_by_album(id: int):
@@ -105,4 +116,13 @@ def get_tracks_by_album(id: int):
     except Album.DoesNotExist:
         return None
 
-    return list(album.track_set.values())
+    tracks = album.track_set.values()
+
+    return [
+        {
+            **track,
+            "album": get_album(track["album_id"]),
+            "artist": get_artist(get_album(track["album_id"])["artist_id"]),
+        }
+        for track in tracks
+    ]
