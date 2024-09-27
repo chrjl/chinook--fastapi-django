@@ -5,6 +5,7 @@ os.environ.setdefault("DJANGO_SETTINGS_MODULE", "backend.config.settings")
 
 # setup django environment
 import django
+from django.forms.models import model_to_dict
 
 django.setup()
 
@@ -31,7 +32,7 @@ def get_artist(id: int):
 def count_albums(artist_id: int = 0):
     if artist_id:
         try:
-            artist = Artist.objects.get(pk=artist_id)
+            artist = Artist.objects.prefetch_related("album_set").get(pk=artist_id)
         except Artist.DoesNotExist:
             return 0
 
@@ -41,29 +42,29 @@ def count_albums(artist_id: int = 0):
 
 
 def list_albums(limit: int, offset: int = 0):
-    albums = Album.objects.values()[offset : offset + limit]
-    albums = [{**album, "artist": get_artist(album["artist_id"])} for album in albums]
-    return albums
+    albums = Album.objects.select_related("artist").all()[offset : offset + limit]
+
+    return [{**model_to_dict(album), "artist": album.artist} for album in albums]
 
 
 def get_album(id: int):
     try:
-        album = Album.objects.values().get(pk=id)
-        artist = get_artist(album["artist_id"])
+        album = Album.objects.select_related("artist").all().get(pk=id)
+        artist = album.artist
     except Album.DoesNotExist:
         return None
 
-    return {**album, "artist": artist}
+    return {**model_to_dict(album), "artist": artist}
 
 
 def get_albums_by_artist(id: int):
     try:
-        artist = Artist.objects.get(pk=id)
+        artist = Artist.objects.prefetch_related("album_set").get(pk=id)
     except Artist.DoesNotExist:
         return None
 
-    albums = artist.album_set.values()
-    albums = [{**album, "artist": artist} for album in albums]
+    album_set = artist.album_set.values()
+    albums = [{**album, "artist": artist} for album in album_set]
 
     return albums
 
@@ -77,7 +78,7 @@ def list_genres():
 def count_tracks(album_id: int = 0):
     if album_id:
         try:
-            album = Album.objects.get(pk=album_id)
+            album = Album.objects.prefetch_related("track_set").get(pk=album_id)
         except Album.DoesNotExist:
             return 0
 
@@ -87,13 +88,15 @@ def count_tracks(album_id: int = 0):
 
 
 def list_tracks(limit: int, offset: int = 0):
-    tracks = Track.objects.order_by("name").values()[offset : offset + limit]
+    tracks = Track.objects.order_by("name").select_related("album__artist")[
+        offset : offset + limit
+    ]
 
     return [
         {
-            **track,
-            "album": get_album(track["album_id"]),
-            "artist": get_artist(get_album(track["album_id"])["artist_id"]),
+            **model_to_dict(track),
+            "album": track.album,
+            "artist": track.album.artist,
         }
         for track in tracks
     ]
@@ -101,28 +104,25 @@ def list_tracks(limit: int, offset: int = 0):
 
 def get_track(id: int):
     try:
-        track = Track.objects.values().get(pk=id)
-        album = get_album(track["album_id"])
-        artist = get_artist(album["artist_id"])
+        track = Track.objects.select_related("album__artist").get(pk=id)
+        album = track.album
+        artist = album.artist
     except Track.DoesNotExist:
         return None
 
-    return {**track, "artist": artist, "album": album}
+    return {**model_to_dict(track), "album": album, "artist": artist}
 
 
 def get_tracks_by_album(id: int):
     try:
-        album = Album.objects.get(pk=id)
+        album = (
+            Album.objects.select_related("artist")
+            .prefetch_related("track_set")
+            .get(pk=id)
+        )
     except Album.DoesNotExist:
         return None
 
     tracks = album.track_set.values()
 
-    return [
-        {
-            **track,
-            "album": get_album(track["album_id"]),
-            "artist": get_artist(get_album(track["album_id"])["artist_id"]),
-        }
-        for track in tracks
-    ]
+    return [{**track, "album": album, "artist": album.artist} for track in tracks]
