@@ -31,7 +31,7 @@ class Genre(models.Model):
 
 
 class Track(models.Model):
-    id = models.IntegerField(db_column="TrackId")
+    id = models.IntegerField(db_column="TrackId", primary_key=True)
     name = models.CharField(db_column="Name", max_length=200)
     album = models.ForeignKey(Album, db_column="AlbumId", on_delete=models.DO_NOTHING)
     genre = models.ForeignKey(Genre, db_column="GenreId", on_delete=models.DO_NOTHING)
