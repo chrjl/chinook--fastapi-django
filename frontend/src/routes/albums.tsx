@@ -14,18 +14,20 @@ import timestring from '../utilities/timestring';
 export interface AlbumObject {
   id: number;
   title: string;
-  artist_id: number;
+  artist: ArtistObject;
 }
 
 export default function Albums() {
+  const { artistId } = useParams();
+
   const [artist, setArtist] = useState<ArtistObject | null>(null);
-  const [albums, setAlbums] = useState<AlbumObject[]>();
   const [page, setPage] = useState<number>(1);
   const [total, setTotal] = useState<number>(0);
-  const [selectedAlbumId, setSelectedAlbumId] = useState<number | null>(null);
   const [showModal, setShowModal] = useState(false);
+  
+  const [albumList, setAlbumList] = useState<AlbumObject[]>();
+  const [selectedAlbumId, setSelectedAlbumId] = useState<number | null>(null);
 
-  const { artistId } = useParams();
   const limit = 20;
   const totalPages = Math.ceil(total / limit);
 
@@ -37,7 +39,7 @@ export default function Albums() {
 
       fetch(`/api/artists/${artistId}/albums`)
         .then((res) => res.json())
-        .then((res) => setAlbums(res.items));
+        .then((res) => setAlbumList(res.items));
     } else {
       setArtist(null);
 
@@ -45,7 +47,7 @@ export default function Albums() {
         .then((res) => res.json())
         .then((res) => {
           setTotal(res.total);
-          setAlbums(res.items);
+          setAlbumList(res.items);
         });
     }
   }, [artistId, page]);
@@ -72,9 +74,9 @@ export default function Albums() {
         </Container>
       )}
 
-      {albums && (
+      {albumList && (
         <ListGroup variant="flush">
-          {albums.map(({ id, title }) => (
+          {albumList.map(({ id, title }) => (
             <ListGroup.Item
               key={id}
               action
@@ -101,7 +103,6 @@ interface AlbumModalProps {
 }
 
 function AlbumModal({ id, show, setShow }: AlbumModalProps) {
-  const [artist, setArtist] = useState<ArtistObject | null>(null);
   const [album, setAlbum] = useState<AlbumObject | null>(null);
   const [tracks, setTracks] = useState<TrackObject[] | null>(null);
 
@@ -114,10 +115,7 @@ function AlbumModal({ id, show, setShow }: AlbumModalProps) {
       .then((res) => res.json())
       .then((res) => {
         setAlbum(res);
-        return fetch(`/api/artists/${res.artist_id}`);
-      })
-      .then((res) => res.json())
-      .then((res) => setArtist(res));
+      });
 
     fetch(`/api/albums/${id}/tracks`)
       .then((res) => res.json())
@@ -132,7 +130,7 @@ function AlbumModal({ id, show, setShow }: AlbumModalProps) {
         </Modal.Header>
         <Modal.Body>
           <p>AlbumId: {album.id}</p>
-          {artist && <p>Artist: {artist.name}</p>}
+          <p>Artist: {album.artist.name}</p>
           <p>Tracks: {tracks ? tracks.length : 0}</p>
           <p>Runtime: {timestring(runtime)}</p>
         </Modal.Body>
