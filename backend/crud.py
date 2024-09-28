@@ -22,11 +22,15 @@ def list_artists(limit: int, offset: int = 0):
 
 def get_artist(id: int):
     try:
-        artist = Artist.objects.values().get(pk=id)
+        artist = Artist.objects.get(pk=id)
+        albums = artist.album_set.all()
+        genres = set([
+            track.genre.name for album in albums for track in album.track_set.all()
+        ])
     except Artist.DoesNotExist:
         return None
 
-    return artist
+    return {**model_to_dict(artist), "genres": genres}
 
 
 def count_albums(artist_id: int = 0):

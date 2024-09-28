@@ -4,6 +4,7 @@ from pydantic import BaseModel
 class ArtistObject(BaseModel):
     id: int = 0
     name: str
+    genres: list[str] = None
     type: str = "artist"
 
 
@@ -18,7 +19,7 @@ class AlbumObject(BaseModel):
     id: int = 0
     title: str
     artist: ArtistObject
-    genres: list[str]
+    genres: list[str] = None
     type: str = "album"
 
 
