@@ -4,6 +4,7 @@ from ..schema import AlbumObject, AlbumList, TrackList
 from ..crud import (
     count_albums,
     list_albums,
+    search_albums,
     get_album,
     count_tracks,
     get_tracks_by_album,
@@ -13,9 +14,13 @@ router = APIRouter(tags=["albums"])
 
 
 @router.get("")
-def albums(limit: int = 10, offset: int = 0) -> AlbumList:
-    total = count_albums()
-    items = list_albums(limit, offset)
+def albums(limit: int = 10, offset: int = 0, search: str | None = None) -> AlbumList:
+    if search:
+        total = count_albums(query=search)
+        items = search_albums(query=search, limit=limit, offset=offset)
+    else:
+        total = count_albums()
+        items = list_albums(limit, offset)
 
     return {"limit": limit, "offset": offset, "total": total, "items": items}
 

@@ -12,7 +12,10 @@ django.setup()
 from .db.models import Artist, Album, Genre, Track
 
 
-def count_artists():
+def count_artists(query: str = None):
+    if query:
+        return Artist.objects.filter(name__contains=query).count()
+
     return Artist.objects.count()
 
 
@@ -20,20 +23,25 @@ def list_artists(limit: int, offset: int = 0):
     return list(Artist.objects.values()[offset : offset + limit])
 
 
+def search_artists(query: str, limit: int, offset: int = 0):
+    artists = Artist.objects.filter(name__contains=query)[offset : offset + limit]
+    return list(artists.values())
+
+
 def get_artist(id: int):
     try:
         artist = Artist.objects.get(pk=id)
         albums = artist.album_set.all()
-        genres = set([
-            track.genre.name for album in albums for track in album.track_set.all()
-        ])
+        genres = set(
+            [track.genre.name for album in albums for track in album.track_set.all()]
+        )
     except Artist.DoesNotExist:
         return None
 
     return {**model_to_dict(artist), "genres": genres}
 
 
-def count_albums(artist_id: int = 0):
+def count_albums(artist_id: int = 0, query: str | None = None):
     if artist_id:
         try:
             artist = Artist.objects.prefetch_related("album_set").get(pk=artist_id)
@@ -42,7 +50,17 @@ def count_albums(artist_id: int = 0):
 
         return artist.album_set.count()
 
+    if query:
+        return Album.objects.filter(title__contains=query).count()
+
     return Album.objects.count()
+
+
+def format_album_object(album):
+    artist = album.artist
+    genres = set([track.genre.name for track in album.track_set.all()])
+
+    return {**model_to_dict(album), "artist": artist, "genres": genres}
 
 
 def list_albums(limit: int, offset: int = 0):
@@ -52,14 +70,18 @@ def list_albums(limit: int, offset: int = 0):
         .all()[offset : offset + limit]
     )
 
-    return [
-        {
-            **model_to_dict(album),
-            "artist": album.artist,
-            "genres": set([track.genre.name for track in album.track_set.all()]),
-        }
-        for album in albums
-    ]
+    return [format_album_object(album) for album in albums]
+
+
+def search_albums(query: str, limit: int, offset: int = 0):
+    albums = (
+        Album.objects.filter(title__contains=query)
+        .select_related("artist")
+        .prefetch_related("track_set__genre")
+        .all()[offset : offset + limit]
+    )
+
+    return [format_album_object(album) for album in albums]
 
 
 def get_album(id: int):
@@ -69,12 +91,10 @@ def get_album(id: int):
             .prefetch_related("track_set__genre")
             .get(pk=id)
         )
-        artist = album.artist
-        genres = set([track.genre.name for track in album.track_set.all()])
     except Album.DoesNotExist:
         return None
 
-    return {**model_to_dict(album), "artist": artist, "genres": genres}
+    return format_album_object(album)
 
 
 def get_albums_by_artist(id: int):
@@ -86,14 +106,7 @@ def get_albums_by_artist(id: int):
         return None
 
     album_set = artist.album_set.all()
-    albums = [
-        {
-            **model_to_dict(album),
-            "artist": artist,
-            "genres": set([track.genre.name for track in album.track_set.all()]),
-        }
-        for album in album_set
-    ]
+    albums = [format_album_object(album) for album in album_set]
 
     return albums
 
@@ -104,7 +117,7 @@ def list_genres():
     return genre_list
 
 
-def count_tracks(album_id: int = 0):
+def count_tracks(album_id: int = 0, query: str | None = None):
     if album_id:
         try:
             album = Album.objects.prefetch_related("track_set").get(pk=album_id)
@@ -113,7 +126,19 @@ def count_tracks(album_id: int = 0):
 
         return album.track_set.count()
 
+    if query:
+        return Track.objects.filter(name__contains=query).count()
+
     return Track.objects.count()
+
+
+def format_track_object(track):
+    return {
+        **model_to_dict(track),
+        "album": track.album,
+        "artist": track.album.artist,
+        "genre": track.genre.name,
+    }
 
 
 def list_tracks(limit: int, offset: int = 0):
@@ -123,15 +148,18 @@ def list_tracks(limit: int, offset: int = 0):
         .select_related("genre")[offset : offset + limit]
     )
 
-    return [
-        {
-            **model_to_dict(track),
-            "album": track.album,
-            "artist": track.album.artist,
-            "genre": track.genre.name,
-        }
-        for track in tracks
-    ]
+    return [format_track_object(track) for track in tracks]
+
+
+def search_tracks(query: str, limit: int, offset: int = 0):
+    tracks = (
+        Track.objects.filter(name__contains=query)
+        .select_related("album__artist")
+        .select_related("genre")
+        .order_by("name")[offset : offset + limit]
+    )
+
+    return [format_track_object(track) for track in tracks]
 
 
 def get_track(id: int):
@@ -147,7 +175,7 @@ def get_track(id: int):
     except Track.DoesNotExist:
         return None
 
-    return {**model_to_dict(track), "album": album, "artist": artist, "genre": genre}
+    return format_track_object(track)
 
 
 def get_tracks_by_album(id: int):
@@ -162,12 +190,4 @@ def get_tracks_by_album(id: int):
 
     tracks = album.track_set.all()
 
-    return [
-        {
-            **model_to_dict(track),
-            "album": album,
-            "artist": album.artist,
-            "genre": track.genre.name,
-        }
-        for track in tracks
-    ]
+    return [format_track_object(track) for track in tracks]

@@ -3,6 +3,7 @@ from fastapi import APIRouter, HTTPException
 from ..crud import (
     count_artists,
     list_artists,
+    search_artists,
     get_artist,
     count_albums,
     get_albums_by_artist,
@@ -16,9 +17,13 @@ router = APIRouter(tags=["artists"])
 
 
 @router.get("")
-def artists(limit: int = 10, offset: int = 0) -> ArtistList:
-    total = count_artists()
-    items = list_artists(limit, offset)
+def artists(limit: int = 10, offset: int = 0, search: str | None = None) -> ArtistList:
+    if search:
+        total = count_artists(query=search)
+        items = search_artists(query=search, limit=limit, offset=offset)
+    else:
+        total = count_artists()
+        items = list_artists(limit, offset)
 
     return {"limit": limit, "offset": offset, "total": total, "items": items}
 
