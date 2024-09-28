@@ -14,6 +14,7 @@ import timestring from '../utilities/timestring';
 export interface AlbumObject {
   id: number;
   title: string;
+  genres: string[];
   artist: ArtistObject;
 }
 
@@ -131,6 +132,7 @@ function AlbumModal({ id, show, setShow }: AlbumModalProps) {
         <Modal.Body>
           <p>AlbumId: {album.id}</p>
           <p>Artist: {album.artist.name}</p>
+          {album.genres.length ? <p>Genres: {album.genres.join(', ')}</p> : null}
           <p>Tracks: {tracks ? tracks.length : 0}</p>
           <p>Runtime: {timestring(runtime)}</p>
         </Modal.Body>

@@ -14,6 +14,7 @@ import timestring from '../utilities/timestring';
 export interface TrackObject {
   id: number;
   name: string;
+  genre: string;
   milliseconds: number;
   album_id: number;
   artist: ArtistObject;
@@ -132,6 +133,7 @@ function TrackModal({ id, show, setShow }: TrackModalProps) {
         <Modal.Body>
           <p>TrackId: {track.id}</p>
           <p>Artist: {track.artist.name}</p>
+          <p>Genre: {track.genre}</p>
           <p>Album: {track.album.title}</p>
           <p>Time: {timestring(track.milliseconds)}</p>
         </Modal.Body>

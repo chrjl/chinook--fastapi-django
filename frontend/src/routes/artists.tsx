@@ -11,6 +11,7 @@ import SimplePagination from '../utilities/simple-pagination';
 export interface ArtistObject {
   id: number;
   name: string;
+  genres: string[];
   type: 'artist';
 }
 
@@ -95,6 +96,9 @@ function ArtistModal({ id, show, setShow }: ArtistModalProps) {
         </Modal.Header>
         <Modal.Body>
           <p>ArtistId: {artist.id}</p>
+          {artist.genres.length ? (
+            <p>Genres: {artist.genres.join(', ')}</p>
+          ) : null}
         </Modal.Body>
         <Modal.Footer>
           <Button variant="secondary" onClick={handleClose}>
