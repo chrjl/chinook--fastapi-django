@@ -18,6 +18,7 @@ class AlbumObject(BaseModel):
     id: int = 0
     title: str
     artist: ArtistObject
+    genres: list[str]
     type: str = "album"
 
 
@@ -37,7 +38,7 @@ class TrackObject(BaseModel):
     # unit_price: float
     artist: ArtistObject
     album: AlbumObject
-    genre: str
+    genre: str = None
     type: str = "track"
 
 
