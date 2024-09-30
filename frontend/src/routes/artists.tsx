@@ -16,11 +16,11 @@ export interface ArtistObject {
 }
 
 export default function Artist() {
-  const [artistList, setArtistList] = useState<ArtistObject[]>([]);
+  const [artists, setArtists] = useState<ArtistObject[]>([]);
   const [page, setPage] = useState<number>(1);
   const [total, setTotal] = useState<number>(0);
-  const [selectedArtistId, setSelectedArtistId] = useState<number | null>(null);
-  const [showModal, setShowModal] = useState(false);
+
+  const [selected, setSelected] = useState<ArtistObject | null>(null);
 
   const limit = 20;
   const totalPages = Math.ceil(total / limit);
@@ -28,24 +28,23 @@ export default function Artist() {
   useEffect(() => {
     fetch('/api/artists')
       .then((res) => res.json())
-      .then((res) => setTotal(res.total));
-  }, []);
-
-  useEffect(() => {
-    fetch(`/api/artists?limit=${limit}&offset=${(page - 1) * limit}`)
-      .then((res) => res.json())
-      .then((res) => setArtistList(res.items));
-  }, [page]);
+      .then((res) => {
+        setTotal(res.total);
+        setArtists(res.items);
+      });
+  }, [page, search]);
 
   return (
     <>
       <h1>Artists</h1>
 
-      {selectedArtistId && (
+      {selected && (
         <ArtistModal
-          id={selectedArtistId}
-          show={showModal}
-          setShow={setShowModal}
+          id={selected.id}
+          name={selected.name}
+          genres={selected.genres}
+          show={Boolean(selected)}
+          onHide={() => setSelected(null)}
         />
       )}
 
@@ -54,7 +53,7 @@ export default function Artist() {
       </Container>
 
       <ListGroup variant="flush">
-        {artistList.map(({ id, name }) => (
+        {artists.map(({ id, name }) => (
           <ListGroup.Item
             key={id}
             action
@@ -68,51 +67,39 @@ export default function Artist() {
   );
 
   function handleSelectArtist(id: number) {
-    setSelectedArtistId(id);
-    setShowModal(true);
+    fetch(`/api/artists/${id}`)
+      .then((res) => res.json())
+      .then((artist) => setSelected(artist));
   }
+
 }
 
 interface ArtistModalProps {
-  id: number;
+  id: number | null;
+  name: string;
+  genres: string[];
   show: boolean;
-  setShow: React.Dispatch<React.SetStateAction<boolean>>;
+  onHide: () => void;
 }
 
-function ArtistModal({ id, show, setShow }: ArtistModalProps) {
-  const [artist, setArtist] = useState<ArtistObject | null>(null);
-
-  useEffect(() => {
-    fetch(`/api/artists/${id}`)
-      .then((res) => res.json())
-      .then((res) => setArtist(res));
-  }, [id]);
-
+function ArtistModal({ id, name, genres, show, onHide }: ArtistModalProps) {
   return (
-    artist && (
-      <Modal centered show={show} onHide={handleClose}>
-        <Modal.Header closeButton>
-          <Modal.Title>{artist.name}</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          <p>ArtistId: {artist.id}</p>
-          {artist.genres.length ? (
-            <p>Genres: {artist.genres.join(', ')}</p>
-          ) : null}
-        </Modal.Body>
-        <Modal.Footer>
-          <Button variant="secondary" onClick={handleClose}>
-            Close
-          </Button>
-          <Link to={`/artists/${artist.id}/albums`}>
-            <Button variant="primary">Browse albums</Button>
-          </Link>
-        </Modal.Footer>
-      </Modal>
-    )
+    <Modal centered show={show} onHide={onHide}>
+      <Modal.Header closeButton>
+        <Modal.Title>{name}</Modal.Title>
+      </Modal.Header>
+      <Modal.Body>
+        <p>ArtistId: {id}</p>
+        {genres.length ? <p>Genres: {genres.join(', ')}</p> : null}
+      </Modal.Body>
+      <Modal.Footer>
+        <Button variant="secondary" onClick={onHide}>
+          Close
+        </Button>
+        <Link to={`/artists/${id}/albums`}>
+          <Button variant="primary">Browse albums</Button>
+        </Link>
+      </Modal.Footer>
+    </Modal>
   );
-
-  function handleClose() {
-    setShow(false);
-  }
 }

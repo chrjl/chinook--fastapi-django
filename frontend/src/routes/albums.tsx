@@ -21,13 +21,12 @@ export interface AlbumObject {
 export default function Albums() {
   const { artistId } = useParams();
 
+  const [albums, setAlbums] = useState<AlbumObject[]>([]);
   const [artist, setArtist] = useState<ArtistObject | null>(null);
   const [page, setPage] = useState<number>(1);
   const [total, setTotal] = useState<number>(0);
-  const [showModal, setShowModal] = useState(false);
-  
-  const [albumList, setAlbumList] = useState<AlbumObject[]>();
-  const [selectedAlbumId, setSelectedAlbumId] = useState<number | null>(null);
+
+  const [selected, setSelected] = useState<AlbumObject | null>(null);
 
   const limit = 20;
   const totalPages = Math.ceil(total / limit);
@@ -40,7 +39,7 @@ export default function Albums() {
 
       fetch(`/api/artists/${artistId}/albums`)
         .then((res) => res.json())
-        .then((res) => setAlbumList(res.items));
+        .then((res) => setAlbums(res.items));
     } else {
       setArtist(null);
 
@@ -48,7 +47,7 @@ export default function Albums() {
         .then((res) => res.json())
         .then((res) => {
           setTotal(res.total);
-          setAlbumList(res.items);
+          setAlbums(res.items);
         });
     }
   }, [artistId, page]);
@@ -57,11 +56,14 @@ export default function Albums() {
     <>
       <h1>Albums</h1>
 
-      {selectedAlbumId && (
+      {selected && (
         <AlbumModal
-          id={selectedAlbumId}
-          show={showModal}
-          setShow={setShowModal}
+          id={selected.id}
+          title={selected.title}
+          artist={selected.artist}
+          genres={selected.genres}
+          show={Boolean(selected)}
+          onHide={() => setSelected(null)}
         />
       )}
 
@@ -75,36 +77,40 @@ export default function Albums() {
         </Container>
       )}
 
-      {albumList && (
-        <ListGroup variant="flush">
-          {albumList.map(({ id, title }) => (
-            <ListGroup.Item
-              key={id}
-              action
-              onClick={() => handleSelectAlbum(id)}
-            >
-              {title}
-            </ListGroup.Item>
-          ))}
-        </ListGroup>
-      )}
+      <ListGroup variant="flush">
+        {albums.map(({ id, title }) => (
+          <ListGroup.Item key={id} action onClick={() => handleSelect(id)}>
+            {title}
+          </ListGroup.Item>
+        ))}
+      </ListGroup>
     </>
   );
 
-  function handleSelectAlbum(id: number) {
-    setSelectedAlbumId(id);
-    setShowModal(true);
+  function handleSelect(id: number) {
+    fetch(`/api/albums/${id}`)
+      .then((res) => res.json())
+      .then((album) => setSelected(album));
   }
 }
 
 interface AlbumModalProps {
   id: number;
+  title: string;
+  artist: ArtistObject;
+  genres: string[];
   show: boolean;
-  setShow: React.Dispatch<React.SetStateAction<boolean>>;
+  onHide: () => void;
 }
 
-function AlbumModal({ id, show, setShow }: AlbumModalProps) {
-  const [album, setAlbum] = useState<AlbumObject | null>(null);
+function AlbumModal({
+  id,
+  title,
+  artist,
+  genres,
+  show,
+  onHide,
+}: AlbumModalProps) {
   const [tracks, setTracks] = useState<TrackObject[] | null>(null);
 
   const runtime = tracks
@@ -112,44 +118,32 @@ function AlbumModal({ id, show, setShow }: AlbumModalProps) {
     : 0;
 
   useEffect(() => {
-    fetch(`/api/albums/${id}`)
-      .then((res) => res.json())
-      .then((res) => {
-        setAlbum(res);
-      });
-
     fetch(`/api/albums/${id}/tracks`)
       .then((res) => res.json())
       .then((res) => setTracks(res.items));
   }, [id]);
 
   return (
-    album && (
-      <Modal centered show={show} onHide={handleClose}>
-        <Modal.Header closeButton>
-          <Modal.Title>{album.title}</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          <p>AlbumId: {album.id}</p>
-          <p>Artist: {album.artist.name}</p>
-          {album.genres.length ? <p>Genres: {album.genres.join(', ')}</p> : null}
-          <p>Tracks: {tracks ? tracks.length : 0}</p>
-          <p>Runtime: {timestring(runtime)}</p>
-        </Modal.Body>
-        <Modal.Footer>
-          <Button variant="secondary" onClick={handleClose}>
-            Close
-          </Button>
+    <Modal centered show={show} onHide={onHide}>
+      <Modal.Header closeButton>
+        <Modal.Title>{title}</Modal.Title>
+      </Modal.Header>
+      <Modal.Body>
+        <p>AlbumId: {id}</p>
+        <p>ArtistId: {artist.name}</p>
+        {genres.length ? <p>Genres: {genres.join(', ')}</p> : null}
+        <p>Tracks: {tracks ? tracks.length : 0}</p>
+        <p>Runtime: {timestring(runtime)}</p>
+      </Modal.Body>
+      <Modal.Footer>
+        <Button variant="secondary" onClick={onHide}>
+          Close
+        </Button>
 
-          <Link to={`/albums/${album.id}/tracks`}>
-            <Button variant="primary">Browse tracks</Button>
-          </Link>
-        </Modal.Footer>
-      </Modal>
-    )
+        <Link to={`/albums/${id}/tracks`}>
+          <Button variant="primary">Browse tracks</Button>
+        </Link>
+      </Modal.Footer>
+    </Modal>
   );
-
-  function handleClose() {
-    setShow(false);
-  }
 }

@@ -14,7 +14,7 @@ import timestring from '../utilities/timestring';
 export interface TrackObject {
   id: number;
   name: string;
-  genre: string;
+  genres: string[];
   milliseconds: number;
   album_id: number;
   artist: ArtistObject;
@@ -24,13 +24,12 @@ export interface TrackObject {
 export default function Tracks() {
   const { albumId } = useParams();
 
+  const [tracks, setTracks] = useState<TrackObject[]>([]);
   const [album, setAlbum] = useState<AlbumObject | null>();
   const [page, setPage] = useState<number>(1);
   const [total, setTotal] = useState<number>(0);
-  const [showModal, setShowModal] = useState<boolean>(false);
 
-  const [trackList, setTrackList] = useState<TrackObject[]>([]);
-  const [selectedTrackId, setSelectedTrackId] = useState<number | null>(null);
+  const [selected, setSelected] = useState<TrackObject | null>(null);
 
   const limit = 20;
   const totalPages = Math.ceil(total / limit);
@@ -45,14 +44,14 @@ export default function Tracks() {
 
       fetch(`/api/albums/${albumId}/tracks`)
         .then((res) => res.json())
-        .then((res) => setTrackList(res.items));
+        .then((res) => setTracks(res.items));
     } else {
       setAlbum(null);
 
       fetch(`/api/tracks?limit=${limit}&offset=${(page - 1) * limit}`)
         .then((res) => res.json())
         .then((res) => {
-          setTrackList(res.items);
+          setTracks(res.items);
           setTotal(res.total);
         });
     }
@@ -62,11 +61,16 @@ export default function Tracks() {
     <>
       <h1>Tracks</h1>
 
-      {selectedTrackId && (
+      {selected && (
         <TrackModal
-          id={selectedTrackId}
-          show={showModal}
-          setShow={setShowModal}
+          id={selected.id}
+          name={selected.name}
+          artist={selected.artist}
+          genres={selected.genres}
+          album={selected.album}
+          milliseconds={selected.milliseconds}
+          show={Boolean(selected)}
+          onHide={() => setSelected(null)}
         />
       )}
 
@@ -85,14 +89,10 @@ export default function Tracks() {
         </Container>
       )}
 
-      {trackList && (
+      {tracks && (
         <ListGroup variant="flush">
-          {trackList.map(({ id, name, milliseconds }) => (
-            <ListGroup.Item
-              key={id}
-              action
-              onClick={() => handleSelectTrack(id)}
-            >
+          {tracks.map(({ id, name, milliseconds }) => (
+            <ListGroup.Item key={id} action onClick={() => handleSelect(id)}>
               {name} ({timestring(milliseconds)})
             </ListGroup.Item>
           ))}
@@ -101,52 +101,51 @@ export default function Tracks() {
     </>
   );
 
-  function handleSelectTrack(id: number) {
-    setSelectedTrackId(id);
-    setShowModal(true);
+  function handleSelect(id: number) {
+    fetch(`/api/tracks/${id}`)
+      .then((res) => res.json())
+      .then((track) => setSelected(track));
   }
 }
 
 interface TrackModalProps {
   id: number;
+  name: string;
+  artist: ArtistObject;
+  album: AlbumObject;
+  genres: string[];
+  milliseconds: number;
   show: boolean;
-  setShow: React.Dispatch<React.SetStateAction<boolean>>;
+  onHide: () => void;
 }
 
-function TrackModal({ id, show, setShow }: TrackModalProps) {
-  const [track, setTrack] = useState<TrackObject | null>(null);
-
-  useEffect(() => {
-    fetch(`/api/tracks/${id}`)
-      .then((res) => res.json())
-      .then((res) => {
-        setTrack(res);
-      });
-  }, [id]);
-
+function TrackModal({
+  id,
+  name,
+  artist,
+  album,
+  genres,
+  milliseconds,
+  show,
+  onHide,
+}: TrackModalProps) {
   return (
-    track && (
-      <Modal centered show={show} onHide={handleClose}>
-        <Modal.Header closeButton>
-          <Modal.Title>{track.name}</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          <p>TrackId: {track.id}</p>
-          <p>Artist: {track.artist.name}</p>
-          <p>Genre: {track.genre}</p>
-          <p>Album: {track.album.title}</p>
-          <p>Time: {timestring(track.milliseconds)}</p>
-        </Modal.Body>
-        <Modal.Footer>
-          <Button variant="secondary" onClick={handleClose}>
-            Close
-          </Button>
-        </Modal.Footer>
-      </Modal>
-    )
+    <Modal centered show={show} onHide={onHide}>
+      <Modal.Header closeButton>
+        <Modal.Title>{name}</Modal.Title>
+      </Modal.Header>
+      <Modal.Body>
+        <p>TrackId: {id}</p>
+        <p>Artist: {artist.name}</p>
+        <p>Genre: {genres.join(', ')}</p>
+        <p>Album: {album.title}</p>
+        <p>Time: {timestring(milliseconds)}</p>
+      </Modal.Body>
+      <Modal.Footer>
+        <Button variant="secondary" onClick={onHide}>
+          Close
+        </Button>
+      </Modal.Footer>
+    </Modal>
   );
-
-  function handleClose() {
-    setShow(false);
-  }
 }
