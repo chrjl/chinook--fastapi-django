@@ -20,13 +20,18 @@ export default function Artist() {
   const [page, setPage] = useState<number>(1);
   const [total, setTotal] = useState<number>(0);
 
+  const [search, setSearch] = useState<string | null>(null);
   const [selected, setSelected] = useState<ArtistObject | null>(null);
 
   const limit = 20;
   const totalPages = Math.ceil(total / limit);
 
   useEffect(() => {
-    fetch('/api/artists')
+    fetch(
+      search
+        ? `/api/artists?limit=${limit}&offset=${(page - 1) * limit}&search=${search}`
+        : `/api/artists?limit=${limit}&offset=${(page - 1) * limit}`
+    )
       .then((res) => res.json())
       .then((res) => {
         setTotal(res.total);
@@ -48,8 +53,15 @@ export default function Artist() {
         />
       )}
 
-      <Container className="d-flex flex-column align-items-center">
         <SimplePagination setPage={setPage} first={1} last={totalPages} />
+      <Container className="d-flex p-2 flex-row flex-wrap justify-content-between">
+        <Form>
+          <Form.Control
+            type="text"
+            placeholder="Search"
+            onChange={handleSearch}
+          ></Form.Control>
+        </Form>
       </Container>
 
       <ListGroup variant="flush">
@@ -72,6 +84,10 @@ export default function Artist() {
       .then((artist) => setSelected(artist));
   }
 
+  function handleSearch(e: React.ChangeEvent<HTMLInputElement>) {
+    setPage(1);
+    setSearch(e.currentTarget.value);
+  }
 }
 
 interface ArtistModalProps {
