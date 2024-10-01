@@ -4,17 +4,17 @@ import { useParams } from 'react-router-dom';
 import ListGroup from 'react-bootstrap/ListGroup';
 import Modal from 'react-bootstrap/Modal';
 import Button from 'react-bootstrap/Button';
-import Container from 'react-bootstrap/Container';
+
+import DataLayout from '../utilities/data-layout';
+import timestring from '../utilities/timestring';
 
 import { ArtistObject } from './artists';
 import { AlbumObject } from './albums';
-import SimplePagination from '../utilities/simple-pagination';
-import timestring from '../utilities/timestring';
 
 export interface TrackObject {
   id: number;
   name: string;
-  genres: string[];
+  genre: string;
   milliseconds: number;
   album_id: number;
   artist: ArtistObject;
@@ -25,14 +25,15 @@ export default function Tracks() {
   const { albumId } = useParams();
 
   const [tracks, setTracks] = useState<TrackObject[]>([]);
-  const [album, setAlbum] = useState<AlbumObject | null>();
+  const [album, setAlbum] = useState<AlbumObject | null>(null);
   const [page, setPage] = useState<number>(1);
   const [total, setTotal] = useState<number>(0);
 
+  const [search, setSearch] = useState<string | null>(null);
   const [selected, setSelected] = useState<TrackObject | null>(null);
 
   const limit = 20;
-  const totalPages = Math.ceil(total / limit);
+  const pages = Math.ceil(total / limit);
 
   useEffect(() => {
     if (albumId) {
@@ -66,7 +67,7 @@ export default function Tracks() {
           id={selected.id}
           name={selected.name}
           artist={selected.artist}
-          genres={selected.genres}
+          genre={selected.genre}
           album={selected.album}
           milliseconds={selected.milliseconds}
           show={Boolean(selected)}
@@ -83,13 +84,14 @@ export default function Tracks() {
             Album: <strong>{album.title}</strong>
           </p>
         </>
-      ) : (
-        <Container className="d-flex flex-column align-items-center">
-          <SimplePagination first={1} last={totalPages} setPage={setPage} />
-        </Container>
-      )}
+      ) : null}
 
-      {tracks && (
+      <DataLayout
+        pages={pages}
+        page={page}
+        setPage={setPage}
+        setSearch={setSearch}
+      >
         <ListGroup variant="flush">
           {tracks.map(({ id, name, milliseconds }) => (
             <ListGroup.Item key={id} action onClick={() => handleSelect(id)}>
@@ -97,7 +99,7 @@ export default function Tracks() {
             </ListGroup.Item>
           ))}
         </ListGroup>
-      )}
+      </DataLayout>
     </>
   );
 
@@ -113,7 +115,7 @@ interface TrackModalProps {
   name: string;
   artist: ArtistObject;
   album: AlbumObject;
-  genres: string[];
+  genre: string;
   milliseconds: number;
   show: boolean;
   onHide: () => void;
@@ -124,7 +126,7 @@ function TrackModal({
   name,
   artist,
   album,
-  genres,
+  genre,
   milliseconds,
   show,
   onHide,
@@ -137,7 +139,7 @@ function TrackModal({
       <Modal.Body>
         <p>TrackId: {id}</p>
         <p>Artist: {artist.name}</p>
-        <p>Genre: {genres.join(', ')}</p>
+        {genre ? <p>Genre: {genre}</p> : null}
         <p>Album: {album.title}</p>
         <p>Time: {timestring(milliseconds)}</p>
       </Modal.Body>

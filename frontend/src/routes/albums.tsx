@@ -4,12 +4,12 @@ import { useParams, Link } from 'react-router-dom';
 import ListGroup from 'react-bootstrap/ListGroup';
 import Modal from 'react-bootstrap/Modal';
 import Button from 'react-bootstrap/Button';
-import Container from 'react-bootstrap/Container';
+
+import DataLayout from '../utilities/data-layout';
+import timestring from '../utilities/timestring';
 
 import { ArtistObject } from './artists';
 import { TrackObject } from './tracks';
-import SimplePagination from '../utilities/simple-pagination';
-import timestring from '../utilities/timestring';
 
 export interface AlbumObject {
   id: number;
@@ -26,10 +26,11 @@ export default function Albums() {
   const [page, setPage] = useState<number>(1);
   const [total, setTotal] = useState<number>(0);
 
+  const [search, setSearch] = useState<string | null>(null);
   const [selected, setSelected] = useState<AlbumObject | null>(null);
 
   const limit = 20;
-  const totalPages = Math.ceil(total / limit);
+  const pages = Math.ceil(total / limit);
 
   useEffect(() => {
     if (artistId) {
@@ -71,19 +72,22 @@ export default function Albums() {
         <p>
           Artist: <strong>{artist.name}</strong>
         </p>
-      ) : (
-        <Container className="d-flex flex-column align-items-center">
-          <SimplePagination setPage={setPage} first={1} last={totalPages} />
-        </Container>
-      )}
+      ) : null}
 
-      <ListGroup variant="flush">
-        {albums.map(({ id, title }) => (
-          <ListGroup.Item key={id} action onClick={() => handleSelect(id)}>
-            {title}
-          </ListGroup.Item>
-        ))}
-      </ListGroup>
+      <DataLayout
+        pages={pages}
+        page={page}
+        setPage={setPage}
+        setSearch={setSearch}
+      >
+        <ListGroup variant="flush">
+          {albums.map(({ id, title }) => (
+            <ListGroup.Item key={id} action onClick={() => handleSelect(id)}>
+              {title}
+            </ListGroup.Item>
+          ))}
+        </ListGroup>
+      </DataLayout>
     </>
   );
 
