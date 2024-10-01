@@ -2,11 +2,10 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 
 import ListGroup from 'react-bootstrap/ListGroup';
-import Container from 'react-bootstrap/Container';
 import Modal from 'react-bootstrap/Modal';
 import Button from 'react-bootstrap/Button';
 
-import SimplePagination from '../utilities/simple-pagination';
+import DataLayout from '../utilities/data-layout';
 
 export interface ArtistObject {
   id: number;
@@ -24,7 +23,7 @@ export default function Artist() {
   const [selected, setSelected] = useState<ArtistObject | null>(null);
 
   const limit = 20;
-  const totalPages = Math.ceil(total / limit);
+  const pages = Math.ceil(total / limit);
 
   useEffect(() => {
     fetch(
@@ -53,40 +52,31 @@ export default function Artist() {
         />
       )}
 
-        <SimplePagination setPage={setPage} first={1} last={totalPages} />
-      <Container className="d-flex p-2 flex-row flex-wrap justify-content-between">
-        <Form>
-          <Form.Control
-            type="text"
-            placeholder="Search"
-            onChange={handleSearch}
-          ></Form.Control>
-        </Form>
-      </Container>
-
-      <ListGroup variant="flush">
-        {artists.map(({ id, name }) => (
-          <ListGroup.Item
-            key={id}
-            action
-            onClick={() => handleSelectArtist(id)}
-          >
-            {name}
-          </ListGroup.Item>
-        ))}
-      </ListGroup>
+      <DataLayout
+        pages={pages}
+        page={page}
+        setPage={setPage}
+        setSearch={setSearch}
+      >
+        <ListGroup variant="flush">
+          {artists.map(({ id, name }) => (
+            <ListGroup.Item
+              key={id}
+              action
+              onClick={() => handleSelect(id)}
+            >
+              {name}
+            </ListGroup.Item>
+          ))}
+        </ListGroup>
+      </DataLayout>
     </>
   );
 
-  function handleSelectArtist(id: number) {
+  function handleSelect(id: number) {
     fetch(`/api/artists/${id}`)
       .then((res) => res.json())
       .then((artist) => setSelected(artist));
-  }
-
-  function handleSearch(e: React.ChangeEvent<HTMLInputElement>) {
-    setPage(1);
-    setSearch(e.currentTarget.value);
   }
 }
 
