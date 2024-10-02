@@ -37,26 +37,30 @@ export default function Tracks() {
 
   useEffect(() => {
     if (albumId) {
-      fetch(`/api/albums/${albumId}`)
-        .then((res) => res.json())
-        .then((res) => {
-          setAlbum(res);
-        });
-
       fetch(`/api/albums/${albumId}/tracks`)
         .then((res) => res.json())
-        .then((res) => setTracks(res.items));
+        .then((tracks) => {
+          setTracks(tracks.items);
+          setAlbum(tracks.items[0].album);
+
+          // disable next/previous buttons by setting pages to 1
+          setTotal(limit);
+        });
     } else {
       setAlbum(null);
 
-      fetch(`/api/tracks?limit=${limit}&offset=${(page - 1) * limit}`)
+      fetch(
+        search
+          ? `/api/tracks?limit=${limit}&offset=${(page - 1) * limit}&search=${search}`
+          : `/api/tracks?limit=${limit}&offset=${(page - 1) * limit}`
+      )
         .then((res) => res.json())
-        .then((res) => {
-          setTracks(res.items);
-          setTotal(res.total);
+        .then((albums) => {
+          setTracks(albums.items);
+          setTotal(albums.total);
         });
     }
-  }, [albumId, page]);
+  }, [albumId, page, search]);
 
   return (
     <>
@@ -90,7 +94,7 @@ export default function Tracks() {
         pages={pages}
         page={page}
         setPage={setPage}
-        setSearch={setSearch}
+        setSearch={albumId ? null : setSearch}
       >
         <ListGroup variant="flush">
           {tracks.map(({ id, name, milliseconds }) => (

@@ -34,24 +34,30 @@ export default function Albums() {
 
   useEffect(() => {
     if (artistId) {
-      fetch(`/api/artists/${artistId}`)
-        .then((res) => res.json())
-        .then((res) => setArtist(res));
-
       fetch(`/api/artists/${artistId}/albums`)
         .then((res) => res.json())
-        .then((res) => setAlbums(res.items));
+        .then((albums) => {
+          setAlbums(albums.items);
+          setArtist(albums.items[0].artist);
+
+          // disable next/previous buttons by setting pages to 1
+          setTotal(limit);
+        });
     } else {
       setArtist(null);
 
-      fetch(`/api/albums?limit=${limit}&offset=${(page - 1) * limit}`)
+      fetch(
+        search
+          ? `/api/albums?limit=${limit}&offset=${(page - 1) * limit}&search=${search}`
+          : `/api/albums?limit=${limit}&offset=${(page - 1) * limit}`
+      )
         .then((res) => res.json())
-        .then((res) => {
-          setTotal(res.total);
-          setAlbums(res.items);
+        .then((albums) => {
+          setTotal(albums.total);
+          setAlbums(albums.items);
         });
     }
-  }, [artistId, page]);
+  }, [artistId, page, search]);
 
   return (
     <>
@@ -78,7 +84,7 @@ export default function Albums() {
         pages={pages}
         page={page}
         setPage={setPage}
-        setSearch={setSearch}
+        setSearch={artistId ? null : setSearch}
       >
         <ListGroup variant="flush">
           {albums.map(({ id, title }) => (
